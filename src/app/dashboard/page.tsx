@@ -1,7 +1,7 @@
-import { currentUser } from "@clerk/nextjs/server";
+import { getServerUser } from "@/lib/auth";
 
 export default async function DashboardPage() {
-  const user = await currentUser();
+  const user = await getServerUser();
 
   return (
     <div className="space-y-6">

@@ -3,6 +3,11 @@
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 
+const isClerkConfigured =
+  typeof window !== "undefined" &&
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.startsWith("pk_") &&
+  !process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?.includes("your_");
+
 export function Header() {
   return (
     <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
@@ -19,14 +24,18 @@ export function Header() {
           >
             Dashboard
           </Link>
-          <UserButton
-            afterSignOutUrl="/"
-            appearance={{
-              elements: {
-                avatarBox: "h-8 w-8",
-              },
-            }}
-          />
+          {isClerkConfigured ? (
+            <UserButton
+              afterSignOutUrl="/"
+              appearance={{
+                elements: {
+                  avatarBox: "h-8 w-8",
+                },
+              }}
+            />
+          ) : (
+            <div className="h-8 w-8 rounded-full bg-zinc-200 dark:bg-zinc-700" />
+          )}
         </nav>
       </div>
     </header>
