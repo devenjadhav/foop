@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// Core Models
+// ============================================
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users            User[]
+  workflows        Workflow[]
+  workflowRuns     WorkflowRun[]
+  apiUsageLogs     ApiUsageLog[]
+  dailyMetrics     DailyMetrics[]
+
+  @@index([createdAt])
+}
+
+model User {
+  id             String   @id @default(cuid())
+  externalId     String?  @unique // For external auth provider IDs
+  email          String   @unique
+  name           String?
+  organizationId String
+  role           Role     @default(MEMBER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workflowRuns WorkflowRun[]
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+model Workflow {
+  id             String         @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  status         WorkflowStatus @default(DRAFT)
+  config         Json           @default("{}")
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  runs         WorkflowRun[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ============================================
+// Analytics Models
+// ============================================
+
+/// Tracks individual workflow execution runs
+model WorkflowRun {
+  id             String        @id @default(cuid())
+  workflowId     String
+  organizationId String
+  userId         String?       // User who triggered the run (if applicable)
+  status         RunStatus     @default(PENDING)
+  startedAt      DateTime      @default(now())
+  completedAt    DateTime?
+  duration       Int?          // Execution time in milliseconds
+  errorMessage   String?
+  errorCode      String?
+  inputData      Json?         // Input parameters for the run
+  outputData     Json?         // Output/result of the run
+  metadata       Json          @default("{}")
+
+  workflow     Workflow     @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([workflowId])
+  @@index([organizationId])
+  @@index([userId])
+  @@index([status])
+  @@index([startedAt])
+  @@index([completedAt])
+}
+
+/// Tracks API endpoint usage
+model ApiUsageLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  endpoint       String   // API endpoint path
+  method         String   // HTTP method (GET, POST, etc.)
+  statusCode     Int      // HTTP response status code
+  duration       Int      // Response time in milliseconds
+  userAgent      String?
+  ipAddress      String?
+  requestSize    Int?     // Request body size in bytes
+  responseSize   Int?     // Response body size in bytes
+  metadata       Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([endpoint])
+  @@index([method])
+  @@index([statusCode])
+  @@index([createdAt])
+}
+
+/// Pre-aggregated daily metrics for fast dashboard queries
+model DailyMetrics {
+  id               String   @id @default(cuid())
+  organizationId   String
+  date             DateTime @db.Date
+
+  // Workflow run metrics
+  totalRuns        Int      @default(0)
+  successfulRuns   Int      @default(0)
+  failedRuns       Int      @default(0)
+  pendingRuns      Int      @default(0)
+
+  // Execution time metrics (in milliseconds)
+  totalDuration    BigInt   @default(0)
+  avgDuration      Int      @default(0)
+  minDuration      Int?
+  maxDuration      Int?
+
+  // API usage metrics
+  totalApiCalls    Int      @default(0)
+  avgApiLatency    Int      @default(0)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, date])
+  @@index([organizationId])
+  @@index([date])
+}
+
+// ============================================
+// Enums
+// ============================================
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  SUCCESS
+  FAILURE
+  TIMEOUT
+  CANCELLED
+}
