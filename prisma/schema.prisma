@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model - synced with Clerk
+model User {
+  id            String       @id @default(cuid())
+  clerkId       String       @unique
+  email         String       @unique
+  firstName     String?
+  lastName      String?
+  imageUrl      String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  memberships   Membership[]
+  invitations   Invitation[] @relation("InvitedBy")
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+// Organization model
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  imageUrl    String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  memberships Membership[]
+  invitations Invitation[]
+
+  @@index([slug])
+}
+
+// Role enum for RBAC
+enum Role {
+  ADMIN
+  MEMBER
+  VIEWER
+}
+
+// Membership - connects User to Organization with a role
+model Membership {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           Role         @default(MEMBER)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([role])
+}
+
+// Invitation status
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+// Invitation for team members
+model Invitation {
+  id             String           @id @default(cuid())
+  email          String
+  role           Role             @default(MEMBER)
+  status         InvitationStatus @default(PENDING)
+  token          String           @unique @default(cuid())
+  expiresAt      DateTime
+  organizationId String
+  invitedById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy      User             @relation("InvitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([token])
+  @@index([organizationId])
+  @@index([status])
+}
