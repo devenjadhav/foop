@@ -1,26 +1,38 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import type { DailyCostReport } from '../../types/cost-report';
 
-const mockReport: DailyCostReport = {
-  date: '2026-04-28',
-  totalCost: 296.29,
-  totalSessions: 84,
-  byRole: [
-    { name: 'deacon', cost: 247.86 },
-    { name: 'mayor', cost: 34.73 },
-    { name: 'boot', cost: 7.17 },
-    { name: 'witness', cost: 6.53 },
-  ],
-  byRig: [
-    { name: 'hearth', cost: 4.87 },
-    { name: 'cockpit', cost: 0.99 },
-    { name: 'foop', cost: 0.67 },
-  ],
-};
+const mockReports: DailyCostReport[] = [
+  {
+    date: '2026-04-28',
+    totalCost: 296.29,
+    totalSessions: 84,
+    byRole: [
+      { name: 'deacon', cost: 247.86 },
+      { name: 'mayor', cost: 34.73 },
+      { name: 'boot', cost: 7.17 },
+      { name: 'witness', cost: 6.53 },
+    ],
+    byRig: [
+      { name: 'hearth', cost: 4.87 },
+      { name: 'cockpit', cost: 0.99 },
+      { name: 'foop', cost: 0.67 },
+    ],
+  },
+  {
+    date: '2026-04-27',
+    totalCost: 301.73,
+    totalSessions: 265,
+    byRole: [
+      { name: 'mayor', cost: 263.26 },
+      { name: 'boot', cost: 38.47 },
+    ],
+    byRig: [],
+  },
+];
 
 const roleIcons: Record<string, string> = {
   boot: '\uD83D\uDC3E',
@@ -80,24 +92,9 @@ function CostBreakdownTable({
   );
 }
 
-export function CostReport() {
-  const report = mockReport;
-
+function DailyReportSection({ report }: { report: DailyCostReport }) {
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Cost Report</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Daily cost aggregate for {new Date(report.date).toLocaleDateString('en-US', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          })}
-        </p>
-      </div>
-
+    <div className="space-y-6">
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card>
@@ -120,32 +117,82 @@ export function CostReport() {
       </div>
 
       {/* By Role */}
-      <Card>
-        <CardHeader
-          title="Cost by Role"
-          description="Breakdown of costs by agent role"
-          action={
-            <Badge variant="info">{report.byRole.length} roles</Badge>
-          }
-        />
-        <CardContent className="p-0">
-          <CostBreakdownTable items={report.byRole} total={report.totalCost} showIcons />
-        </CardContent>
-      </Card>
+      {report.byRole.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Cost by Role"
+            description="Breakdown of costs by agent role"
+            action={
+              <Badge variant="info">{report.byRole.length} roles</Badge>
+            }
+          />
+          <CardContent className="p-0">
+            <CostBreakdownTable items={report.byRole} total={report.totalCost} showIcons />
+          </CardContent>
+        </Card>
+      )}
 
       {/* By Rig */}
-      <Card>
-        <CardHeader
-          title="Cost by Rig"
-          description="Breakdown of costs by infrastructure rig"
-          action={
-            <Badge variant="info">{report.byRig.length} rigs</Badge>
-          }
-        />
-        <CardContent className="p-0">
-          <CostBreakdownTable items={report.byRig} total={report.totalCost} />
-        </CardContent>
-      </Card>
+      {report.byRig.length > 0 && (
+        <Card>
+          <CardHeader
+            title="Cost by Rig"
+            description="Breakdown of costs by infrastructure rig"
+            action={
+              <Badge variant="info">{report.byRig.length} rigs</Badge>
+            }
+          />
+          <CardContent className="p-0">
+            <CostBreakdownTable items={report.byRig} total={report.totalCost} />
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+export function CostReport() {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const report = mockReports[selectedIndex];
+
+  return (
+    <div className="max-w-4xl mx-auto py-8 px-4 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Cost Report</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Daily cost aggregate for {new Date(report.date + 'T00:00:00').toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        </div>
+        {mockReports.length > 1 && (
+          <div className="flex gap-1">
+            {mockReports.map((r, i) => (
+              <button
+                key={r.date}
+                onClick={() => setSelectedIndex(i)}
+                className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                  i === selectedIndex
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {new Date(r.date + 'T00:00:00').toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <DailyReportSection report={report} />
     </div>
   );
 }
