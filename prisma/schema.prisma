@@ -197,3 +197,24 @@ enum UsageLogStatus {
   FAILURE
   PENDING
 }
+
+model MentorRequest {
+  id          String   @id @default(cuid())
+  studentId   String
+  subject     String
+  skills      String[]
+  locationLat Float
+  locationLng Float
+  status      String   @default("pending")
+  mentorId    String?
+  resolution  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  claimedAt   DateTime?
+  resolvedAt  DateTime?
+  escalatedAt DateTime?
+
+  @@index([status])
+  @@index([studentId])
+  @@index([createdAt])
+}
