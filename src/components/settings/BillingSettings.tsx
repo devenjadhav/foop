@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '../ui/Button';
-import { Card, CardHeader, CardContent, CardFooter } from '../ui/Card';
+import { Card, CardHeader, CardContent } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -77,14 +77,10 @@ const mockUsage: UsageMetrics = {
 export function BillingSettings() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
   const currentPlan = mockPlans.find((p) => p.id === mockSubscription.planId);
-
-  const handleUpgrade = (plan: Plan) => {
-    setSelectedPlan(plan);
-    setShowUpgradeModal(true);
-  };
 
   return (
     <div className="space-y-6">

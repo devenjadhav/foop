@@ -6,7 +6,7 @@ import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Toggle } from '../ui/Toggle';
-import type { TeamMember, TeamInvite, Team, TeamRole, TeamSettings as TeamSettingsType } from '../../types/settings';
+import type { TeamMember, TeamInvite, Team, TeamRole } from '../../types/settings';
 
 const mockTeam: Team = {
   id: 'team_1',
@@ -124,16 +124,6 @@ export function TeamSettings() {
     return <Badge variant={variants[role]}>{role}</Badge>;
   };
 
-  const getStatusBadge = (status: TeamMember['status']) => {
-    switch (status) {
-      case 'active':
-        return <Badge variant="success">Active</Badge>;
-      case 'pending':
-        return <Badge variant="warning">Pending</Badge>;
-      case 'deactivated':
-        return <Badge variant="danger">Deactivated</Badge>;
-    }
-  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

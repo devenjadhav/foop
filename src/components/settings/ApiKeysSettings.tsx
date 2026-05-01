@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
 import { Input } from '../ui/Input';
 import { Toggle } from '../ui/Toggle';
-import type { ApiKey, ApiKeyScope, CreateApiKeyRequest } from '../../types/settings';
+import type { ApiKey, ApiKeyScope } from '../../types/settings';
 
 const allScopes: { value: ApiKeyScope; label: string; description: string }[] = [
   { value: 'read:automations', label: 'Read Automations', description: 'View automation configurations and status' },
@@ -305,7 +305,7 @@ export function ApiKeysSettings() {
                   Save your API key
                 </h3>
                 <p className="mt-1 text-sm text-yellow-700">
-                  This is the only time you'll see this key. Copy it now and store it securely.
+                  This is the only time you&apos;ll see this key. Copy it now and store it securely.
                 </p>
               </div>
             </div>
